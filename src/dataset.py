@@ -347,7 +347,7 @@ def main():
     print(f"Dataset trajectories saved to {DATASET_FIGURES_PATH / 'dataset_trajectories.png'}")
 
     # Split into train/val
-    train_dataset, val_dataset = split_dataset(dataset, val_fraction=val_fraction)
+    train_dataset, val_dataset = split_dataset_by_trajectory(dataset, val_fraction=val_fraction)
 
     print_dataset_stats(train_dataset, "Training Set")
     print_dataset_stats(val_dataset, "Validation Set")

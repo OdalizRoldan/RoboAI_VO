@@ -23,7 +23,7 @@ from dataset import (
     save_dataset,
     split_dataset,
 )
-from model import count_parameters, create_model, normalize_inputs
+from model import count_parameters, create_model, normalize_inputs, compute_relative_features
 from robot_simulator import (
     DifferentialDriveRobot,
     ExpertController,
@@ -130,8 +130,14 @@ def train_model(
         Training history dictionary
     """
     # Normalize inputs
-    train_inputs_norm, stats = normalize_inputs(train_dataset["inputs"])
-    val_inputs_norm, _ = normalize_inputs(val_dataset["inputs"], stats)
+    if model_type == "relative":
+        train_rel = compute_relative_features(torch.from_numpy(train_dataset["inputs"])).numpy()
+        val_rel = compute_relative_features(torch.from_numpy(val_dataset["inputs"])).numpy()
+        train_inputs_norm, stats = normalize_inputs(train_rel)
+        val_inputs_norm, _ = normalize_inputs(val_rel, stats)
+    else:
+        train_inputs_norm, stats = normalize_inputs(train_dataset["inputs"])
+        val_inputs_norm, _ = normalize_inputs(val_dataset["inputs"], stats)
 
     # Save normalization stats
     np.savez(DATA_PATH / "normalization_stats.npz", mean=stats["mean"], std=stats["std"])
@@ -457,7 +463,11 @@ def main():
     print_dataset_stats(val_dataset, "Val Dataset")
 
     # Create model
-    model = create_model(model_type=model_type)
+    if model_type == "relative":
+        max_velocity = params.max_wheel_speed
+        model = create_model(model_type=model_type, max_velocity=max_velocity)
+    else:
+        model = create_model(model_type=model_type)
 
     # Train
     history = train_model(
