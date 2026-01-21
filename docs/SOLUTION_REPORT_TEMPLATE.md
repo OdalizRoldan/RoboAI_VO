@@ -1,8 +1,8 @@
 # Solution Report
 
-**Candidate Name:** [Your Name]
-**Date:** [Date]
-**Time Spent:** [X hours]
+**Candidate Name:** Odaliz Rojas
+**Date:** 21/01/26
+**Time Spent:** 
 
 ---
 
@@ -14,32 +14,63 @@
 
 ## Issues Discovered
 
-### Issue 1: [Title]
+### Issue 1: The formula used for calculating speed lacks precision due to a minimum number of steps and a large time interval.
 
-**Category:** [Data / Model / Physics / Other]
-**Severity:** [High / Medium / Low]
+**Category:** Physics
+**Severity:** Medium
 
 **Description:**
-[What is the problem?]
+The accuracy of the final speeds and positions is inaccurate due to the initial values ​​of these two parameters, where:
+
+`dt = 0.05`
+`max_steps = 100`
+
+If greater precision is desired, the value of `max_steps`, which is the number of iterations in which the calculation is performed, must be increased, and the value of `dt` must be decreased accordingly, since one value depends on the other.
+
+The values ​​used for the following test are:
+
+`dt = 0.05`
+`max_steps = 2500`
 
 **How I Found It:**
-[What led you to discover this issue?]
+Based on Gabriel's explanation about the accuracy of numerical methods on the computer and seeing the results of the simulations where the final position of the cars is very far from the target, it was concluded that the calculation of the final speed and position is imprecise, so the described parameters were modified.
 
 **Evidence:**
-[Code snippets, visualizations, metrics that demonstrate the issue]
+In the evaluative graphs of the first test, it could be seen that the model's predictions were 0%, on the other hand, in the evaluative graphs, it can be visually seen that the final positions are far from the proposed target.
 
 ---
 
-### Issue 2: [Title]
+### Issue 2: In the split of the dataset for validation and training, the IDs of each data point were being randomly mixed, which caused the training and validation data to be very similar, resulting in data leakage.
 
-**Category:**
-**Severity:**
+**Category:** Data
+
+**Severity:** High
 
 **Description:**
+Looking at the training and validation logs, very low losses can be seen, as well as a very similar value between training and validation, which is an indication of data leakage.
+
+To fix this, the predefined function `split_dataset_by_trajectory` was used to split the data by trajectory ID, ensuring true randomness between the training and validation data.
 
 **How I Found It:**
+The logs and training graph showed the closeness of the values ​​and, furthermore, after an analysis regarding how the data is being split, it was concluded that it is not being mixed correctly.
 
 **Evidence:**
+These logs show that the losses are low:
+
+```bash
+Epoch  10: train_loss=0.000155, val_loss=0.000153
+Epoch  20: train_loss=0.000115, val_loss=0.000111
+Epoch  30: train_loss=0.000102, val_loss=0.000109
+Epoch  40: train_loss=0.000093, val_loss=0.000104
+Epoch  50: train_loss=0.000088, val_loss=0.000087
+Epoch  60: train_loss=0.000065, val_loss=0.000070
+Epoch  70: train_loss=0.000061, val_loss=0.000067
+Epoch  80: train_loss=0.000060, val_loss=0.000058
+Epoch  90: train_loss=0.000057, val_loss=0.000061
+Epoch 100: train_loss=0.000048, val_loss=0.000050
+```
+
+What is ideal, however, in the evaluation there was an accuracy of 0.
 
 ---
 
