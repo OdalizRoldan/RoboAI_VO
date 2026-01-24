@@ -22,6 +22,7 @@ from dataset import (
     print_dataset_stats,
     save_dataset,
     split_dataset,
+    split_dataset_by_trajectory,
 )
 from model import count_parameters, create_model, normalize_inputs, compute_relative_features
 from robot_simulator import (
@@ -352,8 +353,14 @@ def run_model_on_robot(
             # Prepare input: [x, y, theta, x_target, y_target]
             inp = np.concatenate([state, target])
 
-            # Normalize
-            inp_norm = (inp - stats["mean"]) / stats["std"]
+            if model_type == "relative":
+                # Convert to relative features: [dx, dy, sin(theta), cos(theta)]
+                inp_tensor = torch.FloatTensor(inp).unsqueeze(0)
+                inp_rel = compute_relative_features(inp_tensor).squeeze(0).numpy()
+                inp_norm = (inp_rel - stats["mean"]) / stats["std"]
+            else:
+                # Normalize raw inputs
+                inp_norm = (inp - stats["mean"]) / stats["std"]
 
             # Forward pass
             inp_tensor = torch.FloatTensor(inp_norm).unsqueeze(0).to("cpu")
@@ -453,7 +460,7 @@ def main():
     dataset_time = time.perf_counter() - dataset_start_time
     print(f"Dataset generation completed in {dataset_time:.2f} seconds")
     print_dataset_stats(dataset, "Full Dataset")
-    train_dataset, val_dataset = split_dataset(dataset, val_fraction=val_fraction)
+    train_dataset, val_dataset = split_dataset_by_trajectory(dataset, val_fraction=val_fraction)
     save_dataset(train_dataset, str(DATA_PATH / "train_dataset.pkl"))
     save_dataset(val_dataset, str(DATA_PATH / "val_dataset.pkl"))
 

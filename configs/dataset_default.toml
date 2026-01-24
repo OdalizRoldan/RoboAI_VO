@@ -1,7 +1,7 @@
 # Dataset Generation Parameters
 [dataset]
 seed = 42
-n_trajectories = 200
+n_trajectories = 1000
 include_hard = true
-realistic_robot = false
+realistic_robot = true
 val_fraction = 0.2

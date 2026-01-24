@@ -117,13 +117,16 @@ def normalize_inputs(inputs: np.ndarray, stats: dict | None = None) -> tuple:
 
 class NavigationNetSimple(nn.Module):
     """
-    Minimal network for simple navigation tasks.
+    Minimal network for simple navigation tasks using polar coordinates.
+
+    Input: [rho, sin(alpha), cos(alpha), sin(beta), cos(beta)]
+    where rho=distance to target, alpha=angle to target, beta=orientation difference
 
     Sometimes simpler is better! This 2-layer network might be
     all you need for point-to-point navigation.
     """
 
-    def __init__(self, max_velocity: float, input_dim: int = 4, output_dim: int = 2, hidden_dim: int = 32):
+    def __init__(self, max_velocity: float, input_dim: int = 5, output_dim: int = 2, hidden_dim: int = 64):
         super().__init__()
         self.max_velocity = max_velocity
         self.input_dim = input_dim
@@ -155,25 +158,38 @@ class NavigationNetSimple(nn.Module):
 
 def compute_relative_features(inputs: torch.Tensor) -> torch.Tensor:
     """
-    Convert raw state + target to relative input format.
+    Convert raw state + target to relative polar input format.
 
     Args:
-        x: Robot state [batch, 3] -> [x, y, theta]
-        target: Target position [batch, 2] -> [x_target, y_target]
+        inputs: Raw inputs [batch, 5] -> [x, y, theta, x_target, y_target]
 
     Returns:
-        Input tensor [batch, 4] -> [dx, dy, sin(theta), cos(theta)]
+        Input tensor [batch, 5] -> [rho, sin(alpha), cos(alpha), sin(beta), cos(beta)]
+        where alpha is angle to target, beta is desired orientation difference
     """
-    x = inputs[:, 0:1].clone()
-    y = inputs[:, 1:2].clone()
-    theta = inputs[:, 2:3].clone()
-    x_targets = inputs[:, 3:4].clone()
-    y_targets = inputs[:, 4:5].clone()
+    x = inputs[:, 0:1]
+    y = inputs[:, 1:2]
+    theta = inputs[:, 2:3]
+    x_targets = inputs[:, 3:4]
+    y_targets = inputs[:, 4:5]
 
-    sin_theta = torch.sin(theta)
-    cos_theta = torch.cos(theta)
+    # Polar coordinates relative to target
+    dx = x_targets - x
+    dy = y_targets - y
 
-    return torch.cat([x - x_targets, y - y_targets, sin_theta, cos_theta], dim=1)
+    rho = torch.sqrt(dx**2 + dy**2)
+
+    # Angle to target from robot's perspective
+    alpha = torch.atan2(dy, dx) - theta
+    # Normalize angle to [-pi, pi]
+    alpha = torch.atan2(torch.sin(alpha), torch.cos(alpha))
+
+    # Desired final orientation difference (assuming theta_target = 0)
+    theta_t = torch.zeros_like(theta)
+    beta = theta_t - theta - alpha
+    beta = torch.atan2(torch.sin(beta), torch.cos(beta))
+
+    return torch.cat([rho, torch.sin(alpha), torch.cos(alpha), torch.sin(beta), torch.cos(beta)], dim=1)
 
 
 def create_model(model_type: str, **kwargs) -> nn.Module:

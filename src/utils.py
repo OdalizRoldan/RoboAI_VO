@@ -19,7 +19,7 @@ TRAIN_FIGURES_PATH.mkdir(exist_ok=True)
 EVAL_FIGURES_PATH.mkdir(exist_ok=True)
 DATASET_FIGURES_PATH.mkdir(exist_ok=True)
 ROBOT_FIGURES_PATH.mkdir(exist_ok=True)
-THRESHOLD = 0.01
+THRESHOLD = 0.05 #0.01
 
 
 def seed_everything(seed: int):

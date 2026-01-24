@@ -86,11 +86,20 @@ def generate_dataset(expert: ExpertController, n_trajectories: int, include_hard
 
     difficulties = ["easy", "medium"]
     if include_hard:
-        difficulties.append("hard")
+        # difficulties.append("hard")
+
+        # 20% easy, 40% medium, 40% hard
+        difficulty_weights = [0.2, 0.4, 0.4]
+        difficulties = ["easy", "medium", "hard"]
+    else:
+        # 30% easy, 70% medium
+        difficulty_weights = [0.3, 0.7]
+        difficulties = ["easy", "medium"]
 
     for traj_id in range(n_trajectories):
         # Select difficulty
-        difficulty = difficulties[traj_id % len(difficulties)]
+        # difficulty = difficulties[traj_id % len(difficulties)]
+        difficulty = np.random.choice(difficulties, p=difficulty_weights)
 
         # Generate scenario
         start, target = generate_random_scenario(difficulty)
